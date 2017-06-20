@@ -1,83 +1,77 @@
-# Conditional build:
-%bcond_without  python2         # build python 2 module
-%bcond_without  python3         # build python 3 module
 #
-%define 	module	tlslite
-Summary:	Open source python library that implements SSL and TLS
+# Conditional build:
+%bcond_without	python2 # CPython 2.x module
+%bcond_without	python3 # CPython 3.x module
+
+%define	module		tlslite
+%define	egg_name	tlslite
+Summary:	Open source Python library that implements SSL and TLS
 Name:		python-%{module}
-Version:	0.4.6
+Version:	0.4.9
 Release:	1
 License:	BSD
-Group:		Development/Languages/Python
-Source0:	https://pypi.python.org/packages/source/t/tlslite/%{module}-%{version}.tar.gz
-# Source0-md5:	2f92ebea557802969653f29c7faafbc2
-URL:		https://pypi.python.org/pypi/tlslite
+Group:		Libraries/Python
+Source0:	https://pypi.python.org/packages/source/t/%{module}/%{module}-%{version}.tar.gz
+# Source0-md5:	9f3b3797f595dd66cd36a65c83a87869
+URL:		http://trevp.net/tlslite
+BuildRequires:	rpm-pythonprov
+BuildRequires:	rpmbuild(macros) >= 1.714
 %if %{with python2}
-BuildRequires:	python-distribute
 BuildRequires:	python-modules >= 1:2.6
+BuildRequires:	python-setuptools
 %endif
 %if %{with python3}
-BuildRequires:	python3-distribute
 BuildRequires:	python3-modules >= 3.2
+BuildRequires:	python3-setuptools
 %endif
-BuildRequires:	rpm-pythonprov
-BuildRequires:	rpmbuild(macros) >= 1.710
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-TLS Lite is an open source python library that implements SSL and TLS.
-TLS Lite supports RSA and SRP ciphersuites. TLS Lite is pure python,
+TLS Lite is an open source Python library that implements SSL and TLS.
+TLS Lite supports RSA and SRP cipher suites. TLS Lite is pure Python,
 however it can use other libraries for faster crypto operations. TLS
-Lite integrates with several stdlib neworking libraries.
+Lite integrates with several stdlib networking libraries.
 
-%package -n python3-tlslite
-Summary:	Open source python library that implements SSL and TLS
-Group:		Development/Languages/Python
+%package -n python3-%{module}
+Summary:	Open source Python library that implements SSL and TLS
+Group:		Libraries/Python
 
-%description -n python3-tlslite
-TLS Lite is an open source python library that implements SSL and TLS.
-TLS Lite supports RSA and SRP ciphersuites. TLS Lite is pure python,
+%description -n python3-%{module}
+TLS Lite is an open source Python library that implements SSL and TLS.
+TLS Lite supports RSA and SRP cipher suites. TLS Lite is pure Python,
 however it can use other libraries for faster crypto operations. TLS
-Lite integrates with several stdlib neworking libraries.
+Lite integrates with several stdlib networking libraries.
 
 %prep
 %setup -q -n %{module}-%{version}
 
+chmod a-x README
+
+# and remove their executable permission so that they don't drag in more
+# dependencies, and lint doesn't throw a warning
+chmod -x scripts/tls*.py
+
 %build
 %if %{with python2}
-%py_build -b py2
+%py_build
 %endif
-
 %if %{with python3}
-%py3_build -b py3
+%py3_build
 %endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 %if %{with python2}
-%{__python} setup.py \
-	build -b py2 \
-	install \
-	--skip-build \
-	--optimize=2 \
-	--root=$RPM_BUILD_ROOT
-%py_ocomp $RPM_BUILD_ROOT%{py_sitescriptdir}
-%py_comp $RPM_BUILD_ROOT%{py_sitescriptdir}
+%py_install
 %py_postclean
 %endif
-
-%if %{with python3}
-%{__python3} setup.py  \
-	build -b py3 \
-	install \
-	--skip-build \
-	--optimize=2 \
-	--root=$RPM_BUILD_ROOT
+%if %{with python2}
+%py3_install
 %endif
 
-%{__rm} -rf $RPM_BUILD_ROOT{%{py_sitescriptdir},%{py3_sitescriptdir}}/%{module}/{cacert.pem,packages}
+# scripts are of limited usefulness, put them only in docs
+rm $RPM_BUILD_ROOT%{_bindir}/tls*.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -85,17 +79,15 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with python2}
 %files
 %defattr(644,root,root,755)
-%doc README docs
-%attr(755,root,root) %{_bindir}/tls.py
-%attr(755,root,root) %{_bindir}/tlsdb.py
+%doc README LICENSE scripts/tls*.py
 %{py_sitescriptdir}/%{module}
-%{py_sitescriptdir}/%{module}-%{version}-py*.egg-info
+%{py_sitescriptdir}/%{egg_name}-%{version}-py*.egg-info
 %endif
 
 %if %{with python3}
-%files -n python3-tlslite
+%files -n python3-%{module}
 %defattr(644,root,root,755)
-%doc README docs
+%doc README LICENSE scripts/tls*.py
 %{py3_sitescriptdir}/%{module}
-%{py3_sitescriptdir}/%{module}-%{version}-py*.egg-info
+%{py3_sitescriptdir}/%{egg_name}-%{version}-py*.egg-info
 %endif
