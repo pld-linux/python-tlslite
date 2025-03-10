@@ -8,7 +8,7 @@
 Summary:	Open source Python library that implements SSL and TLS
 Name:		python-%{module}
 Version:	0.4.9
-Release:	8
+Release:	9
 License:	BSD
 Group:		Libraries/Python
 Source0:	https://pypi.python.org/packages/source/t/%{module}/%{module}-%{version}.tar.gz
